@@ -8,17 +8,14 @@ def _hash(senha: str) -> str:
 
 
 def criar_usuario(username: str, email: str, senha: str) -> dict | None:
-    """Cria um novo usuário. Retorna o registro ou None em caso de erro."""
+    """Cria um novo usuário. Retorna o registro ou levanta exceção em caso de erro."""
     client = get_client()
-    try:
-        res = (
-            client.table("usuarios")
-            .insert({"username": username, "email": email, "senha_hash": _hash(senha)})
-            .execute()
-        )
-        return res.data[0] if res.data else None
-    except Exception:
-        return None
+    res = (
+        client.table("usuarios")
+        .insert({"username": username, "email": email, "senha_hash": _hash(senha)})
+        .execute()
+    )
+    return res.data[0] if res.data else None
 
 
 def buscar_por_email(email: str) -> dict | None:

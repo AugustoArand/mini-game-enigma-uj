@@ -35,13 +35,16 @@ def _form_login():
         if not email or not senha:
             st.error("Preencha e-mail e senha.")
             return
-        usuario = db_usuarios.autenticar(email, senha)
-        if usuario:
-            st.session_state["usuario"] = usuario
-            st.session_state["pagina"] = "selecao"
-            st.rerun()
-        else:
-            st.error("❌ E-mail ou senha incorretos.")
+        try:
+            usuario = db_usuarios.autenticar(email, senha)
+            if usuario:
+                st.session_state["usuario"] = usuario
+                st.session_state["pagina"] = "selecao"
+                st.rerun()
+            else:
+                st.error("❌ E-mail ou senha incorretos.")
+        except Exception as e:
+            st.error(f"❌ Erro ao conectar com o banco: {e}")
 
 
 def _form_registro():
@@ -63,11 +66,20 @@ def _form_registro():
         if len(senha) < 6:
             st.error("A senha deve ter pelo menos 6 caracteres.")
             return
-        usuario = db_usuarios.criar_usuario(username, email, senha)
-        if usuario:
-            st.session_state["usuario"] = usuario
-            st.session_state["pagina"] = "selecao"
-            st.success("✅ Conta criada! Bem-vindo ao Enigma Quest!")
-            st.rerun()
-        else:
-            st.error("❌ Este e-mail ou username já está em uso.")
+        try:
+            usuario = db_usuarios.criar_usuario(username, email, senha)
+            if usuario:
+                st.session_state["usuario"] = usuario
+                st.session_state["pagina"] = "selecao"
+                st.success("✅ Conta criada! Bem-vindo ao Enigma Quest!")
+                st.rerun()
+            else:
+                st.error("❌ Erro inesperado: nenhum dado retornado. Tente novamente.")
+        except Exception as e:
+            # Verifica se é violação de unique (email ou username já em uso)
+            erro = str(e)
+            if "unique" in erro.lower() or "duplicate" in erro.lower():
+                st.error("❌ Este e-mail ou username já está em uso.")
+            else:
+                st.error(f"❌ Erro ao criar conta: {erro}")
+
