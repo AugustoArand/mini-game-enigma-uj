@@ -1,0 +1,89 @@
+# ──────────────────────────────────────────────
+# Segredos e variáveis de ambiente
+# ──────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ──────────────────────────────────────────────
+# Python
+# ──────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
+# Ambientes virtuais
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Distribuição / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+MANIFEST
+.eggs/
+
+# Instaladores
+pip-wheel-metadata/
+share/python-wheels/
+
+# ──────────────────────────────────────────────
+# Streamlit
+# ──────────────────────────────────────────────
+.streamlit/secrets.toml
+
+# ──────────────────────────────────────────────
+# Testes e cobertura
+# ──────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+
+# ──────────────────────────────────────────────
+# Ferramentas de desenvolvimento
+# ──────────────────────────────────────────────
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+.pyright/
+
+# Jupyter
+.ipynb_checkpoints
+*.ipynb
+
+# ──────────────────────────────────────────────
+# Editores e IDEs
+# ──────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ──────────────────────────────────────────────
+# Sistema operacional
+# ──────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ──────────────────────────────────────────────
+# Logs
+# ──────────────────────────────────────────────
+*.log
+logs/
