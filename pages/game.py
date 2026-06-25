@@ -4,7 +4,7 @@ from services.game_engine import processar_tentativa, usar_dica, iniciar_nova_ro
 from database import rodadas as db_rodadas
 
 
-DIFICULDADE_LABEL = {"facil": "🟢 Fácil", "medio": "🟡 Médio", "dificil": "🔴 Difícil"}
+DIFICULDADE_LABEL = {"facil": "Fácil", "medio": "Médio", "dificil": "Difícil"}
 
 
 def render():
@@ -53,7 +53,8 @@ def _render_header(enigma: dict, rodada: dict):
     pct = max(0, pontuacao / pontuacao_inicial)
     dif = enigma["dificuldade"]
 
-    cor_barra = "#4ade80" if pct > 0.6 else "#facc15" if pct > 0.3 else "#f87171"
+    cor_barra = "#3ecf8e" if pct > 0.6 else "#f5c842" if pct > 0.3 else "#e05555"
+    pts = f"{pontuacao:,}".replace(",", ".")
 
     st.markdown(
         f"""
@@ -63,7 +64,8 @@ def _render_header(enigma: dict, rodada: dict):
                 <span class="badge {dif}">{DIFICULDADE_LABEL[dif]}</span>
             </div>
             <div class="score-display">
-                <span class="score-value">💰 {pontuacao:,} pts</span>
+                <span class="score-label">Pontuação atual</span>
+                <span class="score-value">{pts} pts</span>
                 <div class="score-bar-bg">
                     <div class="score-bar" style="width:{pct*100:.0f}%; background:{cor_barra};"></div>
                 </div>
@@ -89,7 +91,7 @@ def _render_dicas(rodada: dict, enigma: dict):
     dicas_usadas: int = rodada["dicas_usadas"]
     from config import PENALIDADE_DICA
 
-    st.markdown("#### 💡 Dicas")
+    st.markdown("<p class='section-label'>Dicas</p>", unsafe_allow_html=True)
     dicas_reveladas = st.session_state.get("dicas_reveladas", [])
 
     for n, texto in enumerate(dicas_reveladas, 1):
@@ -98,14 +100,14 @@ def _render_dicas(rodada: dict, enigma: dict):
     if dicas_usadas < 3:
         proxima = dicas_usadas + 1
         custo = PENALIDADE_DICA[proxima]
+        custo_fmt = f"{custo:,}".replace(",", ".")
         if st.button(
-            f"🔍 Revelar Dica {proxima} (-{custo:,} pts)",
+            f"Revelar dica {proxima}  ·  -{custo_fmt} pts",
             key=f"dica_{proxima}",
             use_container_width=True,
         ):
             resultado = usar_dica(rodada, enigma)
             st.session_state["dicas_reveladas"].append(resultado["texto_dica"])
-            # Atualizar rodada no session_state
             rodada_atualizada = db_rodadas.buscar_rodada(rodada["id"])
             st.session_state["rodada"] = rodada_atualizada
             if resultado["pontuacao_atual"] <= 0:
@@ -116,18 +118,19 @@ def _render_dicas(rodada: dict, enigma: dict):
 
 
 def _render_tentativa(rodada: dict, enigma: dict):
-    st.markdown("#### 🎯 Sua Resposta")
+    st.markdown("<p class='section-label'>Sua resposta</p>", unsafe_allow_html=True)
     with st.form("form_tentativa", clear_on_submit=True):
         resposta = st.text_input(
             "Digite sua resposta",
             placeholder="Ex: relógio...",
             key="campo_resposta",
+            label_visibility="collapsed",
         )
         col1, col2 = st.columns([3, 1])
         with col1:
-            submitted = st.form_submit_button("✅ Confirmar Resposta", use_container_width=True)
+            submitted = st.form_submit_button("Confirmar resposta", use_container_width=True)
         with col2:
-            if st.form_submit_button("🏳 Desistir", use_container_width=True):
+            if st.form_submit_button("Desistir", use_container_width=True):
                 from database import rodadas as db_r
                 db_r.finalizar_rodada(rodada["id"], "derrota")
                 st.session_state["rodada"] = db_r.buscar_rodada(rodada["id"])
@@ -138,7 +141,7 @@ def _render_tentativa(rodada: dict, enigma: dict):
             st.warning("Digite uma resposta antes de confirmar.")
             return
 
-        with st.spinner("🤖 A IA está avaliando sua resposta..."):
+        with st.spinner("Avaliando sua resposta..."):
             resultado = processar_tentativa(rodada, enigma, resposta.strip())
 
         feedback_entry = {
@@ -155,14 +158,15 @@ def _render_historico():
     historico = st.session_state.get("historico_feedback", [])
     if not historico:
         return
-    st.markdown("#### 📜 Histórico de Tentativas")
+    st.markdown("<p class='section-label'>Histórico de tentativas</p>", unsafe_allow_html=True)
     for entry in historico:
-        icon = "✅" if entry["correta"] else "❌"
+        cls = "correct" if entry["correta"] else "wrong"
         st.markdown(
             f"""
-            <div class="feedback-entry {'correct' if entry['correta'] else 'wrong'}">
-                {icon} <strong>"{entry['resposta']}"</strong><br>
-                <em>{entry['feedback']}</em>
+            <div class="feedback-entry {cls}">
+                <span class="status-dot"></span>
+                <span class="answer-label">"{entry['resposta']}"</span><br>
+                <em style="opacity: 0.8;">{entry['feedback']}</em>
             </div>
             """,
             unsafe_allow_html=True,
@@ -170,26 +174,26 @@ def _render_historico():
 
 
 def _render_vitoria(rodada: dict, enigma: dict):
-    st.balloons()
+    pts = f"{rodada['pontuacao_atual']:,}".replace(",", ".")
     st.markdown(
         f"""
         <div class="result-banner vitoria">
-            🏆 PARABÉNS! Você acertou!<br>
-            <span class="result-points">+{rodada['pontuacao_atual']:,} pts adicionados ao seu ranking!</span>
+            Resposta correta!
+            <span class="result-points">+{pts} pts adicionados ao seu ranking</span>
         </div>
         """,
         unsafe_allow_html=True,
     )
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("▶ Próximo Enigma", use_container_width=True):
+        if st.button("Próximo enigma", use_container_width=True):
             st.session_state["rodada"] = None
             st.session_state["dicas_reveladas"] = []
             st.session_state["historico_feedback"] = []
             st.session_state["pagina"] = "selecao"
             st.rerun()
     with col2:
-        if st.button("🏅 Ver Ranking", use_container_width=True):
+        if st.button("Ver Ranking", use_container_width=True):
             st.session_state["pagina"] = "ranking"
             st.rerun()
 
@@ -198,7 +202,7 @@ def _render_derrota(rodada: dict, enigma: dict):
     st.markdown(
         f"""
         <div class="result-banner derrota">
-            💀 Game Over! Seus pontos chegaram a zero.<br>
+            Pontuação esgotada
             <span class="result-points">A resposta era: <strong>{enigma['resposta_correta']}</strong></span>
         </div>
         """,
@@ -206,13 +210,13 @@ def _render_derrota(rodada: dict, enigma: dict):
     )
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🔄 Tentar Novamente", use_container_width=True):
+        if st.button("Tentar novamente", use_container_width=True):
             st.session_state["rodada"] = None
             st.session_state["dicas_reveladas"] = []
             st.session_state["historico_feedback"] = []
             st.rerun()
     with col2:
-        if st.button("🏠 Voltar à Seleção", use_container_width=True):
+        if st.button("Voltar à seleção", use_container_width=True):
             st.session_state["rodada"] = None
             st.session_state["dicas_reveladas"] = []
             st.session_state["historico_feedback"] = []
